@@ -7,11 +7,15 @@
 #include <syslog.h>
 #include <signal.h>
 
+#include "canstore.h"
+
 #define REQ_BUFFER_SIZE 1000
 #define RESP_BUFFER_SIZE 1000
 #define MAX_BACKLOG 50
 
-// set to true to stop receive loop
+canstore_t canstore;
+
+// set to 1 to stop receive loop
 static char stop_server = 0;
 
 void do_stop_server(int dummy)
@@ -23,14 +27,18 @@ void do_stop_server(int dummy)
 int main(int argc, char *argv[])
 {
     int host_sock;
-    struct sigaction sigint_action;
-    // enable logging
-    openlog("rest", LOG_PERROR | LOG_PID, LOG_USER);
 
-    // setup handling of SIGINT
-    sigint_action.sa_handler = do_stop_server;
-    sigint_action.sa_flags = SA_NODEFER;
-    sigaction(SIGINT, &sigint_action, NULL);
+    // enable logging
+    openlog("carapi", LOG_PERROR | LOG_PID, LOG_USER);
+
+    // enable signal handling
+    if (setup_signals() < 0) {
+        exit(EXIT_FAILURE);
+    }
+
+    // set up canstore
+    canstore = canstore_init("can0");
+    canstore_start(canstore);
 
     // create and bind the host socket
     host_sock = get_host_socket("127.0.0.1", 1234);
@@ -43,8 +51,23 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    // close the host socket and exit
     close(host_sock);
+    exit(EXIT_SUCCESS);
+
     return 0;
+}
+
+int setup_signals() {
+    struct sigaction sigint_action;
+
+    // setup handling of SIGINT
+    sigint_action.sa_handler = do_stop_server;
+    sigint_action.sa_flags = SA_NODEFER;
+    if (sigaction(SIGINT, &sigint_action, NULL) < 0) {
+        perror("sigaction");
+        return -1;
+    }
 }
 
 int get_host_socket(char *addr, int port)
@@ -143,13 +166,16 @@ int handle_request(char *req_buffer, char *resp_buffer)
 int handle_get_request(char *req_buffer, char *resp_buffer, char *req_arg)
 {
     char resp_payload[1000];
+    double data;
 
     // skip over leading '/' character in request
     req_arg++;
 
     syslog(LOG_INFO, "GET request for key=%s", req_arg);
 
-    sprintf(resp_payload, "{status: 'success', data: {id: '%s'}}\n", req_arg);
+    data = canstore_get(canstore, 1);
+
+    sprintf(resp_payload, "{status: 'success', data: {id: '%f'}}\n", data);
     sprintf(resp_buffer, "HTTP/1.1 200 OK\nContent-Type: application/json; charset=utf-8\nContent-Length: %d\n\n%s", strlen(resp_payload), resp_payload);
 
     return 0;
