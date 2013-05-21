@@ -23,7 +23,7 @@ int can_init(const char* ifname) {
 	syslog(LOG_DEBUG,"initializing cansocket...");
 
 	if ((cansock = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-        syslog(LOG_CRIT, "failed to initialize socket!");
+        perror("socket (can)");
 		return -1;
 	}
 
@@ -36,7 +36,7 @@ int can_init(const char* ifname) {
     syslog(LOG_DEBUG, "opened interface %s at index %d", ifname, ifr.ifr_ifindex);
 	
 	if (bind(cansock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		syslog(LOG_CRIT, "[ERROR] binding socket");
+        perror("bind (can)");
 		return -1;
 	}
 

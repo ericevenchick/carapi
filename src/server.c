@@ -167,17 +167,18 @@ int handle_get_request(char *req_buffer, char *resp_buffer, char *req_arg)
 {
     char resp_payload[1000];
     double data;
+    int key;
 
     // skip over leading '/' character in request
     req_arg++;
+    key = atoi(req_arg);
 
-    syslog(LOG_INFO, "GET request for key=%s", req_arg);
+    syslog(LOG_INFO, "GET request for key=%d", key);
 
-    data = canstore_get(canstore, 1);
+    data = canstore_get(canstore, key);
 
-    sprintf(resp_payload, "{status: 'success', data: {id: '%f'}}\n", data);
-    sprintf(resp_buffer, "HTTP/1.1 200 OK\nContent-Type: application/json; charset=utf-8\nContent-Length: %d\n\n%s", strlen(resp_payload), resp_payload);
-
+    sprintf(resp_payload, "{\"status\": \"success\", \"data\": {\"id\": %d, \"value\": \"%f\"}}\n", key, data);
+    sprintf(resp_buffer, "HTTP/1.1 200 OK\nContent-Type: application/json; charset=utf-8\nAccess-Control-Allow-Origin: *\nContent-Length: %d\n\n%s", strlen(resp_payload), resp_payload);
     return 0;
 }
 

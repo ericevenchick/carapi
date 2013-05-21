@@ -1,0 +1,63 @@
+<html>
+  <head>
+    <title>carAPI test</title>
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script>
+    updatedata = function() {
+      var val;
+      $.getJSON('http://localhost:1234/0', function(resp) {
+        val = parseFloat(resp.data.value).toPrecision(4);
+        $('#data_soc').text(val);
+      });
+      $.getJSON('http://localhost:1234/1', function(resp) {
+        val = parseFloat(resp.data.value).toPrecision(4);
+        $('#data_gfd').text(val);
+      });
+      $.getJSON('http://localhost:1234/2', function(resp) {
+        val = parseFloat(resp.data.value).toPrecision(3);
+        $('#data_ibat').text(val);
+      });
+      $.getJSON('http://localhost:1234/3', function(resp) {
+        val = parseFloat(resp.data.value).toPrecision(4);
+        $('#data_lvbatt').text(val);
+      });
+
+    }
+    window.onload = function() {
+      setInterval(updatedata, 500);
+    }
+
+    </script>
+    <style>
+      td {
+        padding: 8px 25px 8px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>carAPI test</h1>
+    <table>
+      <tr>
+        <td class='label'>Battery SOC</td>
+        <td class='data' id='data_soc'></td>
+        <td class='unit'>%</td>
+      </tr>
+      <tr>
+        <td class='label'>HV Isolation Resistance</td>
+        <td class='data' id='data_gfd'></td>
+        <td class='unit'>kOhm</td>
+      </tr>
+      <tr>
+        <td class='label'>HV Battery Current</td>
+        <td class='data' id='data_ibat'></td>
+        <td class='unit'>A</td>
+      </tr>
+      <tr>
+        <td class='label'>LV Battery Voltage</td>
+        <td class='data' id='data_lvbatt'></td>
+        <td class='unit'>V</td>
+      </tr>
+    </table>
+  </body>
+</html>
+
